@@ -1,0 +1,13 @@
+# Maven build output
+target/
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# OS
+.DS_Store
+
+# Testing
+TEST.xlsx
