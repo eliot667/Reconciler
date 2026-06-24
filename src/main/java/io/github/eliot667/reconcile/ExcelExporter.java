@@ -32,21 +32,28 @@ public class ExcelExporter{
         CellStyle mismatchCell = workbook.createCellStyle(); 
 
         org.apache.poi.ss.usermodel.Row header = sheet.createRow(0);
+        org.apache.poi.ss.usermodel.Row keyNames = sheet.createRow(1);
 
-        Cell idHeader = header.createCell(0);
-        idHeader.setCellValue("ID");
+        Object[] columnArray = source.get(0).fields().keySet().toArray();
 
-        Cell sourceHeader = header.createCell(1);
+        Cell sourceHeader = header.createCell(0);
         sourceHeader.setCellValue("Source");
 
-        Cell targetHeader = header.createCell(2);
+        Cell targetHeader = header.createCell(columnArray.length);
         targetHeader.setCellValue("Target");
 
         
 
-        //TODO iterate through source and target. If we find a value mismatch, paint it red
-        //if we find a missing in source, paint it yellow and skip source but write target
-        //if we find a missing in target, pait it yellow and write source but skip target
+        for(int i = 0; i < columnArray.length; i++)
+        {
+            Cell sourceKeyName = keyNames.createCell(i);
+            Cell targetKeyName = keyNames.createCell(i + columnArray.length);
+
+            sourceKeyName.setCellValue(columnArray[i].toString());
+            targetKeyName.setCellValue(columnArray[i].toString());
+        }
+
+        //TODO loop through all columns in each row based on size!!!
         Set<RowKey> keySet = new LinkedHashSet<>();
 
         extractKeysToSet(source, keyRows, keySet);
@@ -56,48 +63,39 @@ public class ExcelExporter{
         Map<RowKey,Row> targetByKey = RowIndex.indexByKey(target, keyRows);
         Map<RowKey,Discrepancy> discrepancyByKey = RowIndex.discrepancyByKey(discrepancies, keyRows);
 
-        int sheetRowCount = 1;
+        int sheetRowCount = 2;
         for(RowKey key : keySet)
         {
             org.apache.poi.ss.usermodel.Row sheetRow = sheet.createRow(sheetRowCount++);
-            Cell idCell = sheetRow.createCell(0);
             Cell sourceCell = sheetRow.createCell(1);
             Cell targetCell = sheetRow.createCell(2);
 
-            if(discrepancyByKey.containsKey(key))
-            {
-                //Use
-                switch (discrepancyByKey.get(key)) {
-                    case Discrepancy.MissingInSource d:
-                        idCell.setCellValue(key.values().get(0));
-                        sourceCell.setCellValue("MISSING");
-                        colorCellByDiscrepancy(sourceCell,true);
-                        targetCell.setCellValue(targetByKey.get(key).fields().get(keyRows.get(0)));
-                        //System.out.println(targetByKey.get(key).fields().get(key.values().get(0)));
-                        colorCellByDiscrepancy(targetCell,true);
-                        break;
-                    case Discrepancy.MissingInTarget d:
-                        idCell.setCellValue(key.values().get(0));
-                        sourceCell.setCellValue(sourceByKey.get(key).fields().get(keyRows.get(0)));
-                        colorCellByDiscrepancy(sourceCell,true);
-                        targetCell.setCellValue("MISSING");
-                        colorCellByDiscrepancy(targetCell,true);
-                        break;
-                    case Discrepancy.ValueMismatch d:
-                        idCell.setCellValue(key.values().get(0));
-                        sourceCell.setCellValue(sourceByKey.get(key).fields().get(keyRows.get(0)));
-                        colorCellByDiscrepancy(sourceCell,false);
-                        targetCell.setCellValue(targetByKey.get(key).fields().get(keyRows.get(0)));
-                        colorCellByDiscrepancy(targetCell,false);
-                        break;
-                    default:
-                        break;
+            switch (discrepancyByKey.get(key)) {
+                //TODO refactor switch contents to a helper class. DRY!
+                case Discrepancy.MissingInSource d:
+                    sourceCell.setCellValue("MISSING");
+                    colorCellByDiscrepancy(sourceCell,true);
+                    targetCell.setCellValue(targetByKey.get(key).fields().get("amount"));
+                    //System.out.println(targetByKey.get(key).fields().get(key.values().get(0)));
+                    colorCellByDiscrepancy(targetCell,true);
+                    break;
+                case Discrepancy.MissingInTarget d:
+                    sourceCell.setCellValue(sourceByKey.get(key).fields().get("amount"));
+                    colorCellByDiscrepancy(sourceCell,true);
+                    targetCell.setCellValue("MISSING");
+                    colorCellByDiscrepancy(targetCell,true);
+                    break;
+                case Discrepancy.ValueMismatch d:
+                    sourceCell.setCellValue(sourceByKey.get(key).fields().get("amount"));
+                    colorCellByDiscrepancy(sourceCell,false);
+                    targetCell.setCellValue(targetByKey.get(key).fields().get("amount"));
+                    colorCellByDiscrepancy(targetCell,false);
+                    break;
+                default:
+                    sourceCell.setCellValue(sourceByKey.get(key).fields().get("amount"));
+                    targetCell.setCellValue(targetByKey.get(key).fields().get("amount"));
+                    break;
                 }
-            }
-            else
-            {
-                idCell.setCellValue(key.values().get(0));
-            }
         }
         
         try(FileOutputStream fileOut = new FileOutputStream("TEST.xlsx"))
@@ -132,5 +130,10 @@ public class ExcelExporter{
         }
         cellStyle.setFillPattern(FillPatternType.FINE_DOTS);
         cell.setCellStyle(cellStyle);
+    }
+
+    private void populateExcelCell(Map<RowKey,Row> sourceByKey, Map<RowKey,Row> targetByKey)
+    {
+
     }
 }

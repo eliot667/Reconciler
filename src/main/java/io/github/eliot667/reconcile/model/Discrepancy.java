@@ -10,4 +10,5 @@ public sealed interface Discrepancy {
     record MissingInTarget(RowKey key, Row row) implements Discrepancy {};
 
     record ValueMismatch(RowKey key, String column, String sourceValue, String targetValue) implements Discrepancy {};
+	//POTENTIAL TODO Make discrepancy for missing column/column mismatch?
 }
