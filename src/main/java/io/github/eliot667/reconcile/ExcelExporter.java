@@ -66,36 +66,73 @@ public class ExcelExporter{
         int sheetRowCount = 2;
         for(RowKey key : keySet)
         {
+            System.out.println(discrepancyByKey.get(key));
             org.apache.poi.ss.usermodel.Row sheetRow = sheet.createRow(sheetRowCount++);
-            Cell sourceCell = sheetRow.createCell(1);
-            Cell targetCell = sheetRow.createCell(2);
+            Cell sourceCell = sheetRow.createCell(0);
+            Cell targetCell = sheetRow.createCell(columnArray.length);
 
-            switch (discrepancyByKey.get(key)) {
+            if(discrepancyByKey.containsKey(key))
+            {
+                switch (discrepancyByKey.get(key)) {
                 //TODO refactor switch contents to a helper class. DRY!
                 case Discrepancy.MissingInSource d:
-                    sourceCell.setCellValue("MISSING");
-                    colorCellByDiscrepancy(sourceCell,true);
-                    targetCell.setCellValue(targetByKey.get(key).fields().get("amount"));
+                    for(int i = 0; i < columnArray.length; i++)
+                    {
+                        sourceCell = sheetRow.createCell(i);
+                        sourceCell.setCellValue("MISSING");
+                        colorCellByDiscrepancy(sourceCell,true);
+
+                        targetCell = sheetRow.createCell(i + columnArray.length);
+                        targetCell.setCellValue(targetByKey.get(key).fields().get(columnArray[i]));
+                        colorCellByDiscrepancy(targetCell,true);
+                    }
                     //System.out.println(targetByKey.get(key).fields().get(key.values().get(0)));
-                    colorCellByDiscrepancy(targetCell,true);
+                    
                     break;
                 case Discrepancy.MissingInTarget d:
-                    sourceCell.setCellValue(sourceByKey.get(key).fields().get("amount"));
-                    colorCellByDiscrepancy(sourceCell,true);
-                    targetCell.setCellValue("MISSING");
-                    colorCellByDiscrepancy(targetCell,true);
+                    for(int i = 0; i < columnArray.length; i++)
+                    {
+                        sourceCell = sheetRow.createCell(i);
+                        sourceCell.setCellValue(sourceByKey.get(key).fields().get(columnArray[i]));
+                        colorCellByDiscrepancy(sourceCell,true);
+
+                        targetCell = sheetRow.createCell(i + columnArray.length);
+                        targetCell.setCellValue("MISSING");
+                        colorCellByDiscrepancy(targetCell,true);
+                    }
+                    
                     break;
                 case Discrepancy.ValueMismatch d:
-                    sourceCell.setCellValue(sourceByKey.get(key).fields().get("amount"));
-                    colorCellByDiscrepancy(sourceCell,false);
-                    targetCell.setCellValue(targetByKey.get(key).fields().get("amount"));
-                    colorCellByDiscrepancy(targetCell,false);
+                    for(int i = 0; i < columnArray.length; i++)
+                    {
+                        sourceCell = sheetRow.createCell(i);
+                        sourceCell.setCellValue(sourceByKey.get(key).fields().get(columnArray[i]));
+                        colorCellByDiscrepancy(sourceCell,false);
+                    }
+                    for(int i = 0; i < columnArray.length; i++)
+                    {
+                        targetCell = sheetRow.createCell(i + columnArray.length);
+                        targetCell.setCellValue(targetByKey.get(key).fields().get(columnArray[i]));
+                        colorCellByDiscrepancy(targetCell,false);
+                    }
                     break;
                 default:
-                    sourceCell.setCellValue(sourceByKey.get(key).fields().get("amount"));
-                    targetCell.setCellValue(targetByKey.get(key).fields().get("amount"));
                     break;
                 }
+            }
+            else
+            {
+                for(int i = 0; i < columnArray.length; i++)
+                    {
+                        sourceCell = sheetRow.createCell(i);
+                        sourceCell.setCellValue(sourceByKey.get(key).fields().get(columnArray[i]));
+                    }
+                for(int i = 0; i < columnArray.length; i++)
+                    {
+                        targetCell = sheetRow.createCell(i + columnArray.length);
+                        targetCell.setCellValue(targetByKey.get(key).fields().get(columnArray[i]));
+                    }
+            }
         }
         
         try(FileOutputStream fileOut = new FileOutputStream("TEST.xlsx"))

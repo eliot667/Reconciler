@@ -27,11 +27,9 @@ public class Reconciler {
     for (var entry : sourceByKey.entrySet()) {
         RowKey key = entry.getKey();
         Row sourceRow = entry.getValue();
-        // TODO: if target has no row for this key -> add a MissingInTarget
+
         if(!targetByKey.containsKey(key)) {
             results.add(new Discrepancy.MissingInTarget(key, sourceRow));
-        // TODO: else, compare the two rows column by column ->
-        //       add a ValueMismatch for each column whose value differs
         } else {
             Row targetRow = targetByKey.get(key);
             for(String column : sourceRow.fields().keySet()){
@@ -46,7 +44,6 @@ public class Reconciler {
     }
 
     for (var entry : targetByKey.entrySet()) {
-        // TODO: if source has no row for this key -> add a MissingInSource
         if(!sourceByKey.containsKey(entry.getKey())) {
             results.add(new Discrepancy.MissingInSource(entry.getKey(), entry.getValue()));
         }
