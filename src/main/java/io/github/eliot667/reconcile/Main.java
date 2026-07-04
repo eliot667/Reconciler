@@ -17,7 +17,6 @@ public class Main {
     public static void main(String[] args) throws IOException {
         CsvLoader loader = new CsvLoader();
 
-        //TODO set keys to a configuration
         List<String> keyRows = new ArrayList<>();
         keyRows.add("id");
 
@@ -29,8 +28,6 @@ public class Main {
 
         ConsoleReporter fileReporter = new ConsoleReporter();
         fileReporter.report(findings);
-        //System.out.println("Found " + findings.size() + " discrepancies:");
-        //findings.forEach(d -> System.out.println("  " + d));
         System.out.println("\nWould you like to save an Excel file of this report? [y/n]");
         Scanner scanner = new Scanner(System.in);
         String input = scanner.nextLine();
@@ -38,11 +35,7 @@ public class Main {
         if(Character.toLowerCase(input.charAt(0)) == 'y')
         {
             System.out.println("Exporting...");
-            //TODO export findings to Excel file
-            //The excel file will have two columns; first for source, second for target. All columns will be included.
-            //Discrepancies will be colored: YELLOW for a value mismatch, RED for a missing row.
-            ExcelExporter xlExport = new ExcelExporter();
-            xlExport.writeToExcel(keyRows,findings, source, target);
+            ExcelExporter.writeToExcel(keyRows,findings, source, target);
         }
         else
         {

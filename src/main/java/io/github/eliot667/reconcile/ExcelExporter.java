@@ -20,11 +20,10 @@ import io.github.eliot667.reconcile.model.RowKey;
 import io.github.eliot667.reconcile.model.Row;
 import io.github.eliot667.reconcile.RowIndex;
 
-public class ExcelExporter{
+public final class ExcelExporter{
     
-    void writeToExcel(List<String> keyRows, List<Discrepancy> discrepancies, List<Row> source, List<Row> target)
+    static void writeToExcel(List<String> keyRows, List<Discrepancy> discrepancies, List<Row> source, List<Row> target)
     {
-        //TODO implement discrepancy report that will be used to document differences in excel file
         Workbook workbook = new XSSFWorkbook();
         Sheet sheet = workbook.createSheet("Discrepancy Report");
 
@@ -53,7 +52,6 @@ public class ExcelExporter{
             targetKeyName.setCellValue(columnArray[i].toString());
         }
 
-        //TODO loop through all columns in each row based on size!!!
         Set<RowKey> keySet = new LinkedHashSet<>();
 
         extractKeysToSet(source, keyRows, keySet);
@@ -66,7 +64,6 @@ public class ExcelExporter{
         int sheetRowCount = 2;
         for(RowKey key : keySet)
         {
-            System.out.println(discrepancyByKey.get(key));
             org.apache.poi.ss.usermodel.Row sheetRow = sheet.createRow(sheetRowCount++);
             Cell sourceCell = sheetRow.createCell(0);
             Cell targetCell = sheetRow.createCell(columnArray.length);
@@ -74,31 +71,25 @@ public class ExcelExporter{
             if(discrepancyByKey.containsKey(key))
             {
                 switch (discrepancyByKey.get(key)) {
-                //TODO refactor switch contents to a helper class. DRY!
                 case Discrepancy.MissingInSource d:
                     for(int i = 0; i < columnArray.length; i++)
                     {
                         sourceCell = sheetRow.createCell(i);
-                        sourceCell.setCellValue("MISSING");
-                        colorCellByDiscrepancy(sourceCell,true);
+                        populateExcelCell(sourceCell, "MISSING", IndexedColors.YELLOW);
 
                         targetCell = sheetRow.createCell(i + columnArray.length);
-                        targetCell.setCellValue(targetByKey.get(key).fields().get(columnArray[i]));
-                        colorCellByDiscrepancy(targetCell,true);
+                        populateExcelCell(targetCell, targetByKey.get(key).fields().get(columnArray[i]), IndexedColors.YELLOW);
                     }
-                    //System.out.println(targetByKey.get(key).fields().get(key.values().get(0)));
                     
                     break;
                 case Discrepancy.MissingInTarget d:
                     for(int i = 0; i < columnArray.length; i++)
                     {
                         sourceCell = sheetRow.createCell(i);
-                        sourceCell.setCellValue(sourceByKey.get(key).fields().get(columnArray[i]));
-                        colorCellByDiscrepancy(sourceCell,true);
+                        populateExcelCell(sourceCell, sourceByKey.get(key).fields().get(columnArray[i]), IndexedColors.YELLOW);
 
                         targetCell = sheetRow.createCell(i + columnArray.length);
-                        targetCell.setCellValue("MISSING");
-                        colorCellByDiscrepancy(targetCell,true);
+                        populateExcelCell(targetCell, "MISSING", IndexedColors.YELLOW);
                     }
                     
                     break;
@@ -106,14 +97,12 @@ public class ExcelExporter{
                     for(int i = 0; i < columnArray.length; i++)
                     {
                         sourceCell = sheetRow.createCell(i);
-                        sourceCell.setCellValue(sourceByKey.get(key).fields().get(columnArray[i]));
-                        colorCellByDiscrepancy(sourceCell,false);
+                        populateExcelCell(sourceCell, sourceByKey.get(key).fields().get(columnArray[i]), IndexedColors.RED);
                     }
                     for(int i = 0; i < columnArray.length; i++)
                     {
                         targetCell = sheetRow.createCell(i + columnArray.length);
-                        targetCell.setCellValue(targetByKey.get(key).fields().get(columnArray[i]));
-                        colorCellByDiscrepancy(targetCell,false);
+                        populateExcelCell(targetCell, targetByKey.get(key).fields().get(columnArray[i]), IndexedColors.RED);
                     }
                     break;
                 default:
@@ -145,7 +134,7 @@ public class ExcelExporter{
         }
     }
 
-    private void extractKeysToSet(List<Row> rows, List<String> keyColumns, Set<RowKey> keySet)
+    private static void extractKeysToSet(List<Row> rows, List<String> keyColumns, Set<RowKey> keySet)
     {
         for(Row row : rows)
         {
@@ -153,24 +142,14 @@ public class ExcelExporter{
         }
     }
 
-    private void colorCellByDiscrepancy(Cell cell, Boolean isWarning)
+    private static void populateExcelCell(Cell cell, String rowData, IndexedColors color)
     {
+        cell.setCellValue(rowData);
+
         CellStyle cellStyle = cell.getCellStyle();
         cellStyle = cell.getSheet().getWorkbook().createCellStyle();
-        if(isWarning)
-        {
-            cellStyle.setFillForegroundColor(IndexedColors.YELLOW.getIndex());
-        }
-        else
-        {
-            cellStyle.setFillForegroundColor(IndexedColors.RED.getIndex());
-        }
+        cellStyle.setFillForegroundColor(color.getIndex());
         cellStyle.setFillPattern(FillPatternType.FINE_DOTS);
         cell.setCellStyle(cellStyle);
-    }
-
-    private void populateExcelCell(Map<RowKey,Row> sourceByKey, Map<RowKey,Row> targetByKey)
-    {
-
     }
 }
